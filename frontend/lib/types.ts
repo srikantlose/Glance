@@ -74,8 +74,14 @@ export interface ExecuteResult {
 
 export interface SchedulerOption {
   rank: number;
-  action: "event.move" | "event.delete" | "none";
-  event_changes: { event_id: string; new_start: string; new_end: string } | null;
+  action: "event.move" | "event.delete" | "event.create" | "none";
+  event_changes: {
+    event_id: string | null;
+    new_start: string;
+    new_end: string;
+    title?: string | null;
+    attendees?: string[];
+  } | null;
   justification: string;
   cited_episode_or_policy: string | null;
   descriptor: ActionDescriptor | null;

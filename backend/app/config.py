@@ -83,3 +83,15 @@ LYZR_CHAT_PATH = "/v3/inference/chat/"
 # designated delegation target in the seed data (see scripts/seed.py)
 DEFAULT_DELEGATE_EMAIL = "arjun@brightpath.co"
 DEFAULT_DELEGATE_DUE_DAYS = 3
+DEFAULT_MEETING_DURATION_MIN = 30
+
+# manager agent resolves names to email pretty inconsistently even with the cast spelled out in
+# its prompt -- it's a fixed 6-person demo cast, so just do the lookup ourselves
+KNOWN_CONTACTS = {
+    "priya": "priya@brightpath.co",
+    "arjun": "arjun@brightpath.co",
+    "meera": "meera@vendorco.in",
+    "kiran": "kiran@apexretail.com",
+    "sunita": "sunita@apexretail.com",
+    "rahul": "rahul@northwind.co",
+}
