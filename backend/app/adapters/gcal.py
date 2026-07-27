@@ -7,6 +7,7 @@ from app.adapters.google_auth import calendar_service
 from app.adapters.retry import with_retry
 
 CALENDAR_ID = "primary"
+IST = timezone(timedelta(hours=5, minutes=30))
 
 
 def _wrap(exc: HttpError) -> AdapterError:
@@ -17,9 +18,12 @@ def _wrap(exc: HttpError) -> AdapterError:
 @with_retry
 def list_events(days: int = 7) -> list[dict]:
     svc = calendar_service()
-    now = datetime.now(timezone.utc)
-    time_min = now.isoformat()
-    time_max = (now + timedelta(days=days)).isoformat()
+    # anchor on the current week's Monday (IST), not "now" -- otherwise days earlier
+    # in the week silently drop off the dashboard once their start time has passed
+    today_ist = datetime.now(IST).date()
+    week_start = datetime.combine(today_ist - timedelta(days=today_ist.weekday()), datetime.min.time(), tzinfo=IST)
+    time_min = week_start.astimezone(timezone.utc).isoformat()
+    time_max = (week_start + timedelta(days=days)).astimezone(timezone.utc).isoformat()
     try:
         resp = svc.events().list(
             calendarId=CALENDAR_ID,
