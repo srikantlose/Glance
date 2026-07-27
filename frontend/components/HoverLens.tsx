@@ -42,6 +42,8 @@ export function HoverLens({ kind, message, event, task, hasConflict, onResolveCo
   const [show, setShow] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [buttonState, setButtonState] = useState<Record<string, ButtonState>>({});
+  const [composeOpen, setComposeOpen] = useState<Record<string, boolean>>({});
+  const [composeText, setComposeText] = useState<Record<string, string>>({});
 
   function handleMouseEnter() {
     timerRef.current = setTimeout(() => setShow(true), 150);
@@ -81,14 +83,15 @@ export function HoverLens({ kind, message, event, task, hasConflict, onResolveCo
     }
   }
 
-  async function runComms(key: string, goal: "reply" | "delegate", messageId: string) {
+  async function runComms(key: string, goal: "reply" | "delegate", messageId: string, instructions: string) {
     setButtonState((s) => ({ ...s, [key]: "loading" }));
+    setComposeOpen((s) => ({ ...s, [key]: false }));
     try {
       const result = await apiFetch<CommandResponse>("/api/command", {
         method: "POST",
         body: JSON.stringify({
           text: goal === "delegate" ? "Delegate this email" : "Reply to this email",
-          context: { type: "comms", goal, message_id: messageId },
+          context: { type: "comms", goal, message_id: messageId, instructions: instructions.trim() || null },
         }),
       });
       setButtonState((s) => ({ ...s, [key]: result.type === "approval_pending" ? "approval" : "done" }));
@@ -130,14 +133,14 @@ export function HoverLens({ kind, message, event, task, hasConflict, onResolveCo
                 </button>
                 <button
                   disabled={buttonState.reply === "loading"}
-                  onClick={() => runComms("reply", "reply", message.id)}
+                  onClick={() => setComposeOpen((s) => ({ ...s, reply: !s.reply }))}
                   className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
                 >
                   <CornerUpLeft size={12} /> {actionLabel(buttonState.reply, "Reply")}
                 </button>
                 <button
                   disabled={buttonState.delegate === "loading"}
-                  onClick={() => runComms("delegate", "delegate", message.id)}
+                  onClick={() => setComposeOpen((s) => ({ ...s, delegate: !s.delegate }))}
                   className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
                 >
                   <UserPlus size={12} /> {actionLabel(buttonState.delegate, "Delegate")}
@@ -156,6 +159,29 @@ export function HoverLens({ kind, message, event, task, hasConflict, onResolveCo
                   <ListChecks size={12} /> {actionLabel(buttonState.task, "To task")}
                 </button>
               </div>
+              {(composeOpen.reply || composeOpen.delegate) && (
+                <div className="mt-2 flex flex-col gap-1">
+                  <input
+                    autoFocus
+                    value={composeText[composeOpen.reply ? "reply" : "delegate"] || ""}
+                    onChange={(e) => {
+                      const key = composeOpen.reply ? "reply" : "delegate";
+                      setComposeText((s) => ({ ...s, [key]: e.target.value }));
+                    }}
+                    placeholder="Anything to mention? (optional)"
+                    className="rounded border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-accent"
+                  />
+                  <button
+                    onClick={() => {
+                      const key = composeOpen.reply ? "reply" : "delegate";
+                      runComms(key, key as "reply" | "delegate", message.id, composeText[key] || "");
+                    }}
+                    className="self-end rounded bg-accent px-2 py-1 text-xs font-medium text-bg"
+                  >
+                    Send
+                  </button>
+                </div>
+              )}
             </>
           )}
 
