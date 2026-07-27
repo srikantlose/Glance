@@ -120,13 +120,23 @@ def insert_seed_message(raw_b64: str, label_ids: list[str]) -> dict:
 
 
 @with_retry
-def delete_by_label(label_id: str) -> int:
-    # trash, not delete -- messages.delete needs the full mail.google.com scope,
-    # trash works fine with gmail.modify and has the same effect for reseeding
+def clear_inbox() -> int:
+    # reseed clears the whole inbox, not just glance-seed-labeled messages -- real
+    # bounces/notifications that land between reseeds (e.g. a delegation sent to a
+    # fictional seed-cast address) would otherwise sit there competing with seeded
+    # messages for the top-20 window and eventually push one out
     svc = gmail_service()
     try:
-        resp = svc.users().messages().list(userId=USER_ID, labelIds=[label_id], maxResults=100).execute()
-        ids = [m["id"] for m in resp.get("messages", [])]
+        ids = []
+        page_token = None
+        while True:
+            resp = svc.users().messages().list(
+                userId=USER_ID, labelIds=["INBOX"], maxResults=500, pageToken=page_token
+            ).execute()
+            ids.extend(m["id"] for m in resp.get("messages", []))
+            page_token = resp.get("nextPageToken")
+            if not page_token:
+                break
         for mid in ids:
             svc.users().messages().trash(userId=USER_ID, id=mid).execute()
         return len(ids)

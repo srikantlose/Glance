@@ -1,6 +1,3 @@
-import sys
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
 from sqlalchemy import delete
@@ -12,10 +9,6 @@ from app.db import get_db
 from app.ledger.models import Action, Approval, Clarification, Outbox
 
 router = APIRouter()
-
-_SCRIPTS_DIR = Path(__file__).resolve().parents[3] / "scripts"
-if str(_SCRIPTS_DIR) not in sys.path:
-    sys.path.insert(0, str(_SCRIPTS_DIR))
 
 
 def _check_token(x_demo_token: str | None) -> None:
@@ -40,8 +33,7 @@ async def set_failure_mode(body: FailureModeRequest, x_demo_token: str | None = 
 async def reseed(x_demo_token: str | None = Header(default=None), db: Session = Depends(get_db)):
     _check_token(x_demo_token)
 
-    import seed
-    import seed_memory
+    from scripts import seed, seed_memory
 
     # outbox references actions, so it has to go first
     db.execute(delete(Outbox))

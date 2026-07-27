@@ -80,7 +80,7 @@ LYZR_USER_ID = "glance-demo"
 LYZR_CHAT_PATH = "/v3/inference/chat/"
 
 # one-click Delegate on the hover card needs somewhere to delegate TO -- Arjun is the
-# designated delegation target in the seed data (see scripts/seed.py)
+# designated delegation target in the seed data (see backend/scripts/seed.py)
 DEFAULT_DELEGATE_EMAIL = "arjun@brightpath.co"
 DEFAULT_DELEGATE_DUE_DAYS = 3
 DEFAULT_MEETING_DURATION_MIN = 30

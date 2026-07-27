@@ -25,7 +25,23 @@ def context_id(source: str, source_id: str) -> str:
 async def ensure_collections() -> None:
     client = get_client()
     existing = {c.name for c in (await client.get_collections()).collections}
+    await _create_missing(client, existing)
 
+
+async def recreate_collections() -> None:
+    # reseed goes for a fully pristine memory, not just the 5/6 canonical points --
+    # preferences learned live via the clarify flow, and context points keyed to
+    # message/event ids from a previous reseed, would otherwise linger forever and
+    # pollute retrieval (a stray learned preference was outscoring the real ones)
+    client = get_client()
+    existing = {c.name for c in (await client.get_collections()).collections}
+    for name in (PREFERENCES, EPISODES, CONTEXT):
+        if name in existing:
+            await client.delete_collection(name)
+    await _create_missing(client, set())
+
+
+async def _create_missing(client, existing: set[str]) -> None:
     if PREFERENCES not in existing:
         await client.create_collection(
             PREFERENCES,

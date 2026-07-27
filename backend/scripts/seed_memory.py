@@ -1,17 +1,17 @@
 """seeds qdrant memory: preferences, episodes, and the hybrid context collection.
-run after scripts/seed.py so the context embeddings pick up real message/task ids."""
+run after seed.py so the context embeddings pick up real message/task ids."""
 
 import asyncio
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.adapters import gmail, gtasks  # noqa: E402
 from app.adapters.mappers import map_message  # noqa: E402
 from app.memory import qdrant_client as qdrant  # noqa: E402
-from app.memory.collections import context_id, episode_id, pref_id  # noqa: E402
+from app.memory.collections import context_id, episode_id, pref_id, recreate_collections  # noqa: E402
 
 PREFERENCES = [
     dict(
@@ -131,6 +131,7 @@ async def seed_context() -> int:
 
 
 async def run_seed_memory() -> dict:
+    await recreate_collections()
     return {
         "preferences": await seed_preferences(),
         "episodes": await seed_episodes(),

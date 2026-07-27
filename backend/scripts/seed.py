@@ -7,7 +7,7 @@ import sys
 from datetime import date, datetime, time, timedelta, timezone
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "backend"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.adapters import gcal, gmail, gtasks  # noqa: E402
 from app.config import GMAIL_SEED_LABEL  # noqa: E402
@@ -193,9 +193,7 @@ def seed_tasks() -> int:
 
 
 def clear_seeded() -> None:
-    label_id = gmail.find_label_id(GMAIL_SEED_LABEL)
-    if label_id:
-        gmail.delete_by_label(label_id)
+    gmail.clear_inbox()
 
     for ev in gcal.list_seeded_events():
         gcal.delete_event(ev["id"])

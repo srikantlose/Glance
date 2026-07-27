@@ -1,7 +1,7 @@
 """the one test in this suite that isn't fully offline (P20's stated exception) --
 retrieval quality can't be judged with a fake embedding, so this hits the real
-Qdrant + Gemini and expects scripts/seed_memory.py to have already run against
-that project. skips itself when no live credentials are configured."""
+Qdrant + Gemini and expects backend/scripts/seed_memory.py to have already run
+against that project. skips itself when no live credentials are configured."""
 
 import json
 from pathlib import Path
