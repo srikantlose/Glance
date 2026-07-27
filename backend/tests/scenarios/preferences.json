@@ -1,0 +1,22 @@
+[
+  {"instruction": "archive the newsletter from SaaS Times", "expect": 1},
+  {"instruction": "clean up the promo emails", "expect": 1},
+  {"instruction": "what should happen to this Growthletter email?", "expect": 1},
+  {"instruction": "archive all promotional mail from this week", "expect": 1},
+  {"instruction": "book a meeting with Priya tomorrow", "expect": 2},
+  {"instruction": "set up a quick call with Arjun", "expect": 2},
+  {"instruction": "how long should the vendor call be?", "expect": 2},
+  {"instruction": "schedule something with the design team on Wednesday morning at 9", "expect": 3},
+  {"instruction": "find me a slot at 10am Thursday", "expect": 3},
+  {"instruction": "can the sprint demo move to 9:30am?", "expect": 3},
+  {"instruction": "block time for the audit prep -- morning or afternoon?", "expect": 3},
+  {"instruction": "is this email from Priya important?", "expect": 4},
+  {"instruction": "prioritize my inbox", "expect": 4},
+  {"instruction": "flag anything from priya@brightpath.co", "expect": 4},
+  {"instruction": "what do I do with the weekly status email?", "expect": 5},
+  {"instruction": "turn Priya's status update into something actionable", "expect": 5},
+  {"instruction": "handle the ops week-30 status email", "expect": 5},
+  {"instruction": "set up time with Rahul next week", "expect": null},
+  {"instruction": "when should client calls happen?", "expect": null},
+  {"instruction": "schedule the QBR with Apex", "expect": null}
+]
