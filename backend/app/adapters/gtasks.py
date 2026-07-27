@@ -45,7 +45,8 @@ def create_task(title: str, notes: str | None = None, due: str | None = None) ->
     if notes:
         body["notes"] = notes
     if due:
-        body["due"] = due
+        # tasks API wants a full RFC3339 timestamp -- callers routinely only have a bare date
+        body["due"] = due if "T" in due else f"{due}T00:00:00.000Z"
     try:
         return svc.tasks().insert(tasklist=_list_id(), body=body).execute()
     except HttpError as e:
