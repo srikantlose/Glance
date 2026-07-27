@@ -121,12 +121,14 @@ def insert_seed_message(raw_b64: str, label_ids: list[str]) -> dict:
 
 @with_retry
 def delete_by_label(label_id: str) -> int:
+    # trash, not delete -- messages.delete needs the full mail.google.com scope,
+    # trash works fine with gmail.modify and has the same effect for reseeding
     svc = gmail_service()
     try:
         resp = svc.users().messages().list(userId=USER_ID, labelIds=[label_id], maxResults=100).execute()
         ids = [m["id"] for m in resp.get("messages", [])]
         for mid in ids:
-            svc.users().messages().delete(userId=USER_ID, id=mid).execute()
+            svc.users().messages().trash(userId=USER_ID, id=mid).execute()
         return len(ids)
     except HttpError as e:
         raise _wrap(e)

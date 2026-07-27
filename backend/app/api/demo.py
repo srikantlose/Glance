@@ -1,11 +1,15 @@
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
 
 from app import state
 from app.config import settings
+from app.db import get_db
+from app.ledger.models import Action, Approval, Clarification, Outbox
 
 router = APIRouter()
 
@@ -33,11 +37,18 @@ async def set_failure_mode(body: FailureModeRequest, x_demo_token: str | None = 
 
 
 @router.post("/api/demo/reseed")
-async def reseed(x_demo_token: str | None = Header(default=None)):
+async def reseed(x_demo_token: str | None = Header(default=None), db: Session = Depends(get_db)):
     _check_token(x_demo_token)
 
     import seed
     import seed_memory
+
+    # outbox references actions, so it has to go first
+    db.execute(delete(Outbox))
+    db.execute(delete(Action))
+    db.execute(delete(Approval))
+    db.execute(delete(Clarification))
+    db.commit()
 
     google_summary = seed.run_seed()
     memory_summary = await seed_memory.run_seed_memory()
