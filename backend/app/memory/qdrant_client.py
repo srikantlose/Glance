@@ -13,7 +13,8 @@ CONTEXT = "context"
 
 @lru_cache(maxsize=None)
 def get_client() -> AsyncQdrantClient:
-    return AsyncQdrantClient(url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY)
+    # port has to be explicit -- leaving it out makes the client guess 443 and Qdrant Cloud 404s
+    return AsyncQdrantClient(url=settings.QDRANT_URL, api_key=settings.QDRANT_API_KEY, port=6333)
 
 
 @lru_cache(maxsize=None)
@@ -27,21 +28,21 @@ def sparse_vector(text: str) -> models.SparseVector:
 
 
 async def search_preferences(text: str, k: int = POLICY_CANDIDATE_K) -> list[dict]:
-    vector = (await embeddings.embed([text]))[0]
+    vector = (await embeddings.embed([text], task_type="RETRIEVAL_QUERY"))[0]
     client = get_client()
     hits = await client.query_points(PREFERENCES, query=vector, limit=k, with_payload=True)
     return [{"id": str(p.id), "score": p.score, **p.payload} for p in hits.points]
 
 
 async def search_episodes(text: str, k: int = EPISODE_TOP_K) -> list[dict]:
-    vector = (await embeddings.embed([text]))[0]
+    vector = (await embeddings.embed([text], task_type="RETRIEVAL_QUERY"))[0]
     client = get_client()
     hits = await client.query_points(EPISODES, query=vector, limit=k, with_payload=True)
     return [{"id": str(p.id), "score": p.score, **p.payload} for p in hits.points]
 
 
 async def search_context_hybrid(text: str, k: int = CONTEXT_TOP_K) -> list[dict]:
-    dense_vector = (await embeddings.embed([text]))[0]
+    dense_vector = (await embeddings.embed([text], task_type="RETRIEVAL_QUERY"))[0]
     sparse = sparse_vector(text)
     client = get_client()
     hits = await client.query_points(
@@ -58,7 +59,7 @@ async def search_context_hybrid(text: str, k: int = CONTEXT_TOP_K) -> list[dict]
 
 
 async def upsert_preference(point_id: str, text: str, payload: dict) -> None:
-    vector = (await embeddings.embed([text]))[0]
+    vector = (await embeddings.embed([text], task_type="RETRIEVAL_DOCUMENT"))[0]
     client = get_client()
     await client.upsert(
         PREFERENCES,
@@ -67,7 +68,7 @@ async def upsert_preference(point_id: str, text: str, payload: dict) -> None:
 
 
 async def upsert_episode(point_id: str, text: str, payload: dict) -> None:
-    vector = (await embeddings.embed([text]))[0]
+    vector = (await embeddings.embed([text], task_type="RETRIEVAL_DOCUMENT"))[0]
     client = get_client()
     await client.upsert(
         EPISODES,
@@ -76,7 +77,7 @@ async def upsert_episode(point_id: str, text: str, payload: dict) -> None:
 
 
 async def upsert_context(point_id: str, text: str, payload: dict) -> None:
-    dense_vector = (await embeddings.embed([text]))[0]
+    dense_vector = (await embeddings.embed([text], task_type="RETRIEVAL_DOCUMENT"))[0]
     sparse = sparse_vector(text)
     client = get_client()
     await client.upsert(

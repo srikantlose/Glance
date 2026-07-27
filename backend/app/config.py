@@ -58,7 +58,7 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # pinned constants — not env, not overridable per-deploy
-POLICY_MATCH_THRESHOLD = 0.80
+POLICY_MATCH_THRESHOLD = 0.67  # calibrated against live gemini-embedding-001 scores, see DECISIONS.md
 POLICY_CANDIDATE_K = 5
 CONTEXT_TOP_K = 6
 EPISODE_TOP_K = 4

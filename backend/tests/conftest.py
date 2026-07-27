@@ -84,7 +84,7 @@ def fake_embed(monkeypatch):
     without calling out to gemini."""
     from app.memory import embeddings
 
-    async def fake_embed_fn(texts):
+    async def fake_embed_fn(texts, task_type=None):
         return [_hash_vector(t) for t in texts]
 
     monkeypatch.setattr(embeddings, "embed", fake_embed_fn)
