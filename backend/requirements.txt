@@ -63,7 +63,7 @@ pyparsing==3.3.2
 pytest==9.1.1
 pytest-asyncio==1.4.0
 python-dotenv==1.2.2
-pywin32==312
+pywin32==312; sys_platform == "win32"
 PyYAML==6.0.3
 qdrant-client==1.18.0
 requests==2.34.2
@@ -83,4 +83,4 @@ urllib3==2.7.0
 uvicorn==0.51.0
 watchfiles==1.2.0
 websockets==16.1.1
-win32_setctime==1.2.0
+win32_setctime==1.2.0; sys_platform == "win32"
