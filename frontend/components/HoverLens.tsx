@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import useSWR from "swr";
-import { Archive, CheckCircle2, CornerUpLeft, GitMerge, ListChecks, UserPlus } from "lucide-react";
+import { useSWRConfig } from "swr";
 import { apiFetch, newIdempotencyKey } from "@/lib/api";
 import type { CalendarEvent, CommandResponse, ExecuteResult, InboxMessage, TaskItem, TriageVerdict } from "@/lib/types";
 import { Badge } from "./Badge";
 import { PolicyPill } from "./PolicyPill";
+import { Icon } from "./Icon";
+import { usePointer } from "@/lib/pointer";
 
 type Kind = "message" | "event" | "task";
 type ButtonState = "idle" | "loading" | "done" | "queued" | "approval";
@@ -18,7 +20,6 @@ interface Props {
   task?: TaskItem;
   hasConflict?: boolean;
   conflictEventIds?: string[];
-  onResolveConflict?: () => void;
   children: React.ReactNode;
 }
 
@@ -46,7 +47,6 @@ export function HoverLens({
   task,
   hasConflict,
   conflictEventIds,
-  onResolveConflict,
   children,
 }: Props) {
   const [show, setShow] = useState(false);
@@ -54,6 +54,12 @@ export function HoverLens({
   const [buttonState, setButtonState] = useState<Record<string, ButtonState>>({});
   const [composeOpen, setComposeOpen] = useState<Record<string, boolean>>({});
   const [composeText, setComposeText] = useState<Record<string, string>>({});
+  const { mutate } = useSWRConfig();
+  const { armed, prompt } = usePointer();
+
+  // the pointer owns the screen once it's armed -- leaving this card up as well just
+  // stacks two popovers on the same row
+  const suppressed = armed || prompt !== null;
 
   function handleMouseEnter() {
     timerRef.current = setTimeout(() => setShow(true), 150);
@@ -88,6 +94,7 @@ export function HoverLens({
         ...s,
         [key]: result.status === "executed" ? "done" : result.status === "queued" ? "queued" : "approval",
       }));
+      mutate("/api/dashboard");
     } catch {
       setButtonState((s) => ({ ...s, [key]: "idle" }));
     }
@@ -110,6 +117,23 @@ export function HoverLens({
     }
   }
 
+  async function resolveConflict() {
+    if (!conflictEventIds?.length) return;
+    setButtonState((s) => ({ ...s, conflict: "loading" }));
+    try {
+      await apiFetch<CommandResponse>("/api/command", {
+        method: "POST",
+        body: JSON.stringify({
+          text: "Resolve this conflict",
+          context: { type: "conflict", event_ids: conflictEventIds },
+        }),
+      });
+      setButtonState((s) => ({ ...s, conflict: "done" }));
+    } catch {
+      setButtonState((s) => ({ ...s, conflict: "idle" }));
+    }
+  }
+
   // the agent pointer reads these off the dom to work out what it's aimed at, which
   // keeps the three column components from having to know it exists
   const entity = message
@@ -119,6 +143,9 @@ export function HoverLens({
       : task
         ? { id: task.id, label: task.title }
         : null;
+
+  const btn =
+    "flex items-center gap-1 rounded border border-border-glass px-2 py-1 text-xs text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-50";
 
   return (
     <div
@@ -131,60 +158,70 @@ export function HoverLens({
       onMouseLeave={handleMouseLeave}
     >
       {children}
-      {show && (
-        <div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-lg border border-border bg-surface-2 p-3 shadow-xl">
+      {show && !suppressed && (
+        <div className="absolute top-full right-0 z-30 mt-1 w-72 rounded-xl border border-border-glass bg-surface-charcoal/90 p-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] backdrop-blur-xl">
           {kind === "message" && message && (
             <>
               {!verdict ? (
-                <p className="text-xs text-muted">thinking…</p>
+                <p className="text-xs text-on-surface-variant">thinking…</p>
               ) : (
                 <>
-                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
                     <Badge tone={PRIORITY_TONE[verdict.priority]}>{verdict.priority}</Badge>
-                    <span className="text-xs text-muted">{verdict.suggested_action.replace("_", " ")}</span>
+                    <span className="text-xs text-on-surface-variant">
+                      {verdict.suggested_action.replace("_", " ")}
+                    </span>
                     {verdict.cited_policy_id && (
                       <PolicyPill policyId={verdict.cited_policy_id} policyText={verdict.cited_policy_text} />
                     )}
                   </div>
-                  <p className="mb-3 text-xs text-muted">{verdict.reasoning}</p>
+                  <p className="mb-3 text-xs text-on-surface-variant">{verdict.reasoning}</p>
                 </>
               )}
               <div className="flex flex-wrap gap-2">
                 <button
                   disabled={buttonState.archive === "loading"}
                   onClick={() =>
-                    runExecute("archive", { tool: "gmail", operation: "archive", params: { message_id: message.id } }, authorization)
+                    runExecute(
+                      "archive",
+                      { tool: "gmail", operation: "archive", params: { message_id: message.id } },
+                      authorization,
+                    )
                   }
-                  className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                  className={btn}
                 >
-                  <Archive size={12} /> {actionLabel(buttonState.archive, "Archive")}
+                  <Icon name="archive" size={12} /> {actionLabel(buttonState.archive, "Archive")}
                 </button>
                 <button
                   disabled={buttonState.reply === "loading"}
                   onClick={() => setComposeOpen((s) => ({ ...s, reply: !s.reply }))}
-                  className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                  className={btn}
                 >
-                  <CornerUpLeft size={12} /> {actionLabel(buttonState.reply, "Reply")}
+                  <Icon name="reply" size={12} /> {actionLabel(buttonState.reply, "Reply")}
                 </button>
                 <button
                   disabled={buttonState.delegate === "loading"}
                   onClick={() => setComposeOpen((s) => ({ ...s, delegate: !s.delegate }))}
-                  className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                  className={btn}
                 >
-                  <UserPlus size={12} /> {actionLabel(buttonState.delegate, "Delegate")}
+                  <Icon name="person_add" size={12} /> {actionLabel(buttonState.delegate, "Delegate")}
                 </button>
                 <button
                   disabled={buttonState.task === "loading"}
                   onClick={() =>
                     runExecute(
                       "task",
-                      { tool: "tasks", operation: "task.create", params: { title: message.subject, notes: message.snippet } },
+                      {
+                        tool: "tasks",
+                        operation: "task.create",
+                        params: { title: message.subject, notes: message.snippet },
+                      },
                       authorization,
                     )
                   }
-                  className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                  className={btn}
                 >
-                  <ListChecks size={12} /> {actionLabel(buttonState.task, "To task")}
+                  <Icon name="checklist" size={12} /> {actionLabel(buttonState.task, "To task")}
                 </button>
               </div>
               {(composeOpen.reply || composeOpen.delegate) && (
@@ -197,14 +234,14 @@ export function HoverLens({
                       setComposeText((s) => ({ ...s, [key]: e.target.value }));
                     }}
                     placeholder="Anything to mention? (optional)"
-                    className="rounded border border-border bg-surface px-2 py-1 text-xs outline-none focus:border-accent"
+                    className="rounded border border-border-glass bg-surface-container-lowest/60 px-2 py-1 text-xs text-on-surface outline-none focus:border-primary"
                   />
                   <button
                     onClick={() => {
                       const key = composeOpen.reply ? "reply" : "delegate";
                       runComms(key, key as "reply" | "delegate", message.id, composeText[key] || "");
                     }}
-                    className="self-end rounded bg-accent px-2 py-1 text-xs font-medium text-bg"
+                    className="self-end rounded bg-primary-container px-2 py-1 text-xs font-medium text-on-primary-container"
                   >
                     Send
                   </button>
@@ -215,14 +252,17 @@ export function HoverLens({
 
           {kind === "event" && event && (
             <>
-              <p className="mb-1 text-sm font-medium">{event.title}</p>
-              <p className="mb-3 text-xs text-muted">{event.attendees.join(", ") || "no attendees"}</p>
+              <p className="mb-1 text-sm font-semibold text-on-surface">{event.title}</p>
+              <p className="mb-3 text-xs text-on-surface-variant">
+                {event.attendees.join(", ") || "no attendees"}
+              </p>
               {hasConflict && (
                 <button
-                  onClick={onResolveConflict}
-                  className="flex items-center gap-1 rounded border border-warn/40 bg-warn/10 px-2 py-1 text-xs text-warn hover:bg-warn/20"
+                  disabled={buttonState.conflict === "loading"}
+                  onClick={resolveConflict}
+                  className="flex items-center gap-1 rounded border border-tertiary/40 bg-tertiary/10 px-2 py-1 text-xs text-tertiary hover:bg-tertiary/20"
                 >
-                  <GitMerge size={12} /> Resolve conflict
+                  <Icon name="merge" size={12} /> {actionLabel(buttonState.conflict, "Resolve conflict")}
                 </button>
               )}
             </>
@@ -230,7 +270,7 @@ export function HoverLens({
 
           {kind === "task" && task && (
             <>
-              <p className="mb-3 text-sm font-medium">{task.title}</p>
+              <p className="mb-3 text-sm font-semibold text-on-surface">{task.title}</p>
               <button
                 disabled={buttonState.complete === "loading"}
                 onClick={() =>
@@ -240,9 +280,9 @@ export function HoverLens({
                     { type: "instruction", ref: "hover complete" },
                   )
                 }
-                className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-50"
+                className={btn}
               >
-                <CheckCircle2 size={12} /> {actionLabel(buttonState.complete, "Complete")}
+                <Icon name="check_circle" size={12} /> {actionLabel(buttonState.complete, "Complete")}
               </button>
             </>
           )}

@@ -1,30 +1,278 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #0b0e14;
-  --color-surface: #131720;
-  --color-surface-2: #1a2029;
-  --color-border: #232b36;
-  --color-text: #e6eaf2;
-  --color-muted: #8a94a6;
-  --color-accent: #6ea8fe;
-  --color-high: #f87171;
-  --color-normal: #fbbf24;
-  --color-low: #64748b;
-  --color-success: #34d399;
-  --color-warn: #f59e0b;
-  --font-sans: var(--font-inter);
+  /* palette */
+  --color-background-obsidian: #050505;
+  --color-surface-charcoal: #0f1115;
+  --color-background: #111317;
+  --color-surface: #111317;
+  --color-surface-dim: #111317;
+  --color-surface-bright: #37393e;
+  --color-surface-container-lowest: #0c0e12;
+  --color-surface-container-low: #1a1c20;
+  --color-surface-container: #1e2024;
+  --color-surface-container-high: #282a2e;
+  --color-surface-container-highest: #333539;
+  --color-surface-variant: #333539;
+  --color-surface-tint: #d2bbff;
+  --color-inverse-surface: #e2e2e8;
+  --color-inverse-on-surface: #2f3035;
+
+  --color-on-background: #e2e2e8;
+  --color-on-surface: #e2e2e8;
+  --color-on-surface-variant: #ccc3d8;
+
+  --color-primary: #d2bbff;
+  --color-primary-container: #7c3aed;
+  --color-primary-fixed: #eaddff;
+  --color-primary-fixed-dim: #d2bbff;
+  --color-on-primary: #3f008e;
+  --color-on-primary-container: #ede0ff;
+  --color-on-primary-fixed: #25005a;
+  --color-on-primary-fixed-variant: #5a00c6;
+  --color-inverse-primary: #732ee4;
+
+  --color-secondary: #adc6ff;
+  --color-secondary-container: #0566d9;
+  --color-secondary-fixed: #d8e2ff;
+  --color-secondary-fixed-dim: #adc6ff;
+  --color-on-secondary: #002e6a;
+  --color-on-secondary-container: #e6ecff;
+  --color-on-secondary-fixed: #001a42;
+  --color-on-secondary-fixed-variant: #004395;
+
+  --color-tertiary: #ffb784;
+  --color-tertiary-container: #a15100;
+  --color-tertiary-fixed: #ffdcc6;
+  --color-tertiary-fixed-dim: #ffb784;
+  --color-on-tertiary: #4f2500;
+  --color-on-tertiary-container: #ffe0cd;
+  --color-on-tertiary-fixed: #301400;
+  --color-on-tertiary-fixed-variant: #713700;
+
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  --color-accent-violet: #7c3aed;
+  --color-accent-blue: #3b82f6;
+  --color-text-secondary: #94a3b8;
+  --color-outline: #958da1;
+  --color-outline-variant: #4a4455;
+  --color-border-glass: rgba(255, 255, 255, 0.08);
+
+  /* radii -- deliberately squarer than tailwind's defaults, and note "full" is 12px
+     rather than a pill; that's what the design system specifies */
+  --radius: 0.125rem;
+  --radius-sm: 0.125rem;
+  --radius-md: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-2xl: 0.5rem;
+  --radius-3xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  /* spacing */
+  --spacing-stack-sm: 0.5rem;
+  --spacing-stack-md: 1rem;
+  --spacing-stack-lg: 2rem;
+  --spacing-gutter: 1.5rem;
+  --spacing-card-padding: 1.25rem;
+  --spacing-container-margin: 2rem;
+
+  /* type */
+  --font-body-md: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-body-lg: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-label-sm: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-label-md: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-headline-md: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-headline-lg: var(--font-inter), Inter, system-ui, sans-serif;
+  --font-headline-lg-mobile: var(--font-inter), Inter, system-ui, sans-serif;
+
+  --text-label-sm: 11px;
+  --text-label-sm--line-height: 14px;
+  --text-label-sm--letter-spacing: 0.08em;
+  --text-label-sm--font-weight: 600;
+
+  --text-label-md: 12px;
+  --text-label-md--line-height: 16px;
+  --text-label-md--letter-spacing: 0.05em;
+  --text-label-md--font-weight: 500;
+
+  --text-body-md: 14px;
+  --text-body-md--line-height: 20px;
+  --text-body-md--font-weight: 400;
+
+  --text-body-lg: 16px;
+  --text-body-lg--line-height: 24px;
+  --text-body-lg--font-weight: 400;
+
+  --text-headline-md: 18px;
+  --text-headline-md--line-height: 24px;
+  --text-headline-md--letter-spacing: -0.01em;
+  --text-headline-md--font-weight: 600;
+
+  --text-headline-lg: 24px;
+  --text-headline-lg--line-height: 32px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+
+  --text-headline-lg-mobile: 20px;
+  --text-headline-lg-mobile--line-height: 28px;
+  --text-headline-lg-mobile--font-weight: 600;
 }
 
 :root {
   color-scheme: dark;
 }
 
-body {
-  background: var(--color-bg);
-  color: var(--color-text);
+html {
+  /* the shader paints over this -- it's here so there's no white flash before first frame */
+  background-color: #050505;
 }
 
-* {
-  border-color: var(--color-border);
+body {
+  cursor: default;
+  overflow-x: hidden;
+  background-color: transparent;
+  color: var(--color-on-surface);
+}
+
+/* rows the agent pointer can lock onto */
+.glance-row {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.glance-row:hover {
+  background-color: rgba(226, 232, 240, 0.03);
+  border-color: rgba(226, 232, 240, 0.1);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+/* ---- agent pointer ---- */
+
+#agent-pointer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(226, 232, 240, 0.5);
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition:
+    width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.3s ease;
+}
+
+#agent-pointer.locked {
+  width: 12px;
+  height: 12px;
+  background-color: #e2e8f0;
+  border-color: #e2e8f0;
+  box-shadow: 0 0 12px rgba(226, 232, 240, 0.6);
+}
+
+@keyframes pointerPulse {
+  0% {
+    box-shadow:
+      0 0 10px rgba(226, 232, 240, 0.6),
+      0 0 20px rgba(226, 232, 240, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 15px rgba(226, 232, 240, 0.9),
+      0 0 30px rgba(226, 232, 240, 0.5);
+  }
+  100% {
+    box-shadow:
+      0 0 10px rgba(226, 232, 240, 0.6),
+      0 0 20px rgba(226, 232, 240, 0.3);
+  }
+}
+
+#agent-pointer.active-mode {
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e2e8f0;
+  background-color: rgba(226, 232, 240, 0.15);
+  animation: pointerPulse 1.5s infinite ease-in-out;
+}
+
+#agent-pointer.active-mode.locked {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #e2e8f0;
+  background-color: #e2e8f0;
+  animation: none;
+  box-shadow:
+    0 0 16px rgba(226, 232, 240, 0.8),
+    0 0 32px rgba(226, 232, 240, 0.4);
+}
+
+#pointer-chip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  margin-left: 16px;
+  margin-top: -8px;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 9998;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  transform: translateX(-10px);
+}
+
+#pointer-chip.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+#pointer-prompt {
+  position: fixed;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 10000;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  transform: translateY(10px);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(226, 232, 240, 0.15);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+}
+
+#pointer-prompt.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #agent-pointer.active-mode {
+    animation: none;
+  }
 }

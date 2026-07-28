@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Undo2 } from "lucide-react";
 import type { LedgerRowData } from "@/lib/types";
 import { fmtIST } from "@/lib/format";
 import { Badge } from "./Badge";
 import { PolicyPill } from "./PolicyPill";
+import { Icon } from "./Icon";
 
 const STATUS_TONE: Record<string, "success" | "warn" | "high" | "muted" | "accent"> = {
   executed: "success",
@@ -31,20 +31,20 @@ export function LedgerRow({ row, onUndo }: { row: LedgerRowData; onUndo: (id: st
   const canUndo = !row.irreversible && !alreadyUndone && row.status === "executed";
 
   return (
-    <tr className="border-b border-border text-sm hover:bg-surface-2">
-      <td className="whitespace-nowrap px-3 py-2 text-muted">{fmtIST(row.created_at)}</td>
-      <td className="px-3 py-2">{row.agent_name ?? row.actor}</td>
-      <td className="px-3 py-2">{row.tool}</td>
-      <td className="px-3 py-2">{row.operation}</td>
+    <tr className="border-b border-border-glass text-sm transition-colors hover:bg-[rgba(226,232,240,0.03)]">
+      <td className="px-3 py-2 whitespace-nowrap text-on-surface-variant">{fmtIST(row.created_at)}</td>
+      <td className="px-3 py-2 text-on-surface">{row.agent_name ?? row.actor}</td>
+      <td className="px-3 py-2 text-on-surface">{row.tool}</td>
+      <td className="px-3 py-2 text-on-surface">{row.operation}</td>
       <td className="px-3 py-2">
         {row.authorization_type === "policy" && row.authorization_ref ? (
           <PolicyPill policyId={row.authorization_ref} />
         ) : row.authorization_type === "approval" ? (
-          <a href="/approvals" className="text-xs text-accent hover:underline">
+          <a href="/approvals" className="text-xs text-primary hover:underline">
             approval
           </a>
         ) : (
-          <span className="text-xs text-muted" title={row.authorization_ref ?? undefined}>
+          <span className="text-xs text-on-surface-variant" title={row.authorization_ref ?? undefined}>
             instruction
           </span>
         )}
@@ -53,13 +53,13 @@ export function LedgerRow({ row, onUndo }: { row: LedgerRowData; onUndo: (id: st
         {row.lyzr_trace_id ? (
           <button
             onClick={() => navigator.clipboard.writeText(row.lyzr_trace_id ?? "")}
-            className="flex items-center gap-1 text-xs text-muted hover:text-text"
+            className="flex items-center gap-1 text-xs text-on-surface-variant hover:text-on-surface"
             title={row.lyzr_trace_id}
           >
-            {row.lyzr_trace_id.slice(0, 8)} <Copy size={10} />
+            {row.lyzr_trace_id.slice(0, 8)} <Icon name="content_copy" size={10} />
           </button>
         ) : (
-          <span className="text-xs text-muted">--</span>
+          <span className="text-xs text-on-surface-variant">--</span>
         )}
       </td>
       <td className="px-3 py-2">
@@ -67,16 +67,16 @@ export function LedgerRow({ row, onUndo }: { row: LedgerRowData; onUndo: (id: st
       </td>
       <td className="px-3 py-2">
         {alreadyUndone ? null : row.irreversible ? (
-          <span className="text-xs text-muted" title="irreversible — draft a correction instead">
+          <span className="text-xs text-on-surface-variant" title="irreversible — draft a correction instead">
             irreversible
           </span>
         ) : (
           <button
             disabled={!canUndo || busy}
             onClick={undo}
-            className="flex items-center gap-1 rounded border border-border px-2 py-1 text-xs hover:bg-surface disabled:opacity-40"
+            className="flex items-center gap-1 rounded border border-border-glass px-2 py-1 text-xs text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-40"
           >
-            <Undo2 size={12} /> Undo
+            <Icon name="undo" size={12} /> Undo
           </button>
         )}
       </td>

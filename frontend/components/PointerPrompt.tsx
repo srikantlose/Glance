@@ -1,103 +1,162 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Crosshair } from "lucide-react";
+import { useSWRConfig } from "swr";
 import { usePointer } from "@/lib/pointer";
-import type { CommandResponse, EntityTarget, SchedulerOption } from "@/lib/types";
+import { apiFetch, newIdempotencyKey } from "@/lib/api";
+import type { CommandResponse, ExecuteResult, SchedulerOption } from "@/lib/types";
 import { CommandResult } from "./CommandResult";
 
-const WIDTH = 320;
-const GAP = 18;
-const MARGIN = 8;
+const WIDTH = 256;
 
-interface Props {
-  onSubmit: (text: string, target: EntityTarget) => Promise<CommandResponse | null>;
-  onClarifyAnswer: (clarificationId: string, answer: string, saveAsPolicy: boolean) => void;
-  onApplyOption: (option: SchedulerOption) => void;
-  result: CommandResponse | null;
-  onDismiss: () => void;
-}
-
-export function PointerPrompt({ onSubmit, onClarifyAnswer, onApplyOption, result, onDismiss }: Props) {
-  const { locked, busy, setBusy, close } = usePointer();
-  const [text, setText] = useState("");
+export function PointerPrompt() {
+  const { prompt, pointerRef, closePrompt } = usePointer();
+  const { mutate } = useSWRConfig();
   const boxRef = useRef<HTMLDivElement>(null);
-  const [placement, setPlacement] = useState({ left: 0, top: 0 });
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  // fresh prompt every time it reopens on something new
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<CommandResponse | null>(null);
+
+  const refresh = () => mutate("/api/dashboard");
+
+  // the node stays mounted so the fade/slide transition has something to animate
   useEffect(() => {
-    if (locked) setText("");
-  }, [locked]);
+    if (prompt) {
+      setText("");
+      setResult(null);
+      const t = setTimeout(() => inputRef.current?.focus(), 50);
+      return () => clearTimeout(t);
+    }
+  }, [prompt]);
 
   useLayoutEffect(() => {
-    if (!locked) return;
-    const { x, y } = locked.anchor;
-    const height = boxRef.current?.offsetHeight ?? 120;
+    if (!prompt || !boxRef.current) return;
+    const { x, y } = prompt.anchor;
+    const box = boxRef.current;
 
-    const flipX = x + GAP + WIDTH + MARGIN > window.innerWidth;
-    const flipY = y + GAP + height + MARGIN > window.innerHeight;
+    let left = x + 10;
+    let top = y + 20;
+    if (left + WIDTH > window.innerWidth) left = window.innerWidth - WIDTH - 20;
+    if (top + box.offsetHeight > window.innerHeight) top = y - box.offsetHeight - 20;
 
-    setPlacement({
-      left: Math.max(MARGIN, flipX ? x - GAP - WIDTH : x + GAP),
-      top: Math.max(MARGIN, flipY ? y - GAP - height : y + GAP),
-    });
-  }, [locked, result]);
-
-  if (!locked) return null;
+    box.style.left = `${Math.max(8, left)}px`;
+    box.style.top = `${Math.max(8, top)}px`;
+  }, [prompt, result]);
 
   async function run() {
-    if (!text.trim() || !locked) return;
+    const target = prompt?.target;
+    if (!text.trim() || !target) return;
     setBusy(true);
     try {
-      await onSubmit(text.trim(), locked.target);
+      const res = await apiFetch<CommandResponse>("/api/command", {
+        method: "POST",
+        body: JSON.stringify({
+          text: text.trim(),
+          context: {
+            type: "entity",
+            kind: target.kind,
+            id: target.id,
+            label: target.label,
+            event_ids: target.eventIds,
+          },
+        }),
+      });
+      setResult(res);
+      refresh();
     } finally {
       setBusy(false);
     }
   }
 
-  function dismiss() {
-    onDismiss();
-    close();
+  async function clarifyAnswer(clarificationId: string, answer: string, saveAsPolicy: boolean) {
+    setBusy(true);
+    try {
+      const res = await apiFetch<CommandResponse>("/api/clarify", {
+        method: "POST",
+        body: JSON.stringify({ clarification_id: clarificationId, answer, save_as_policy: saveAsPolicy }),
+      });
+      setResult(res);
+      refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function applyOption(option: SchedulerOption) {
+    if (!option.descriptor) return;
+    setBusy(true);
+    try {
+      const res = await apiFetch<ExecuteResult>("/api/actions/execute", {
+        method: "POST",
+        body: JSON.stringify({
+          descriptor: option.descriptor,
+          authorization: { type: "instruction", ref: option.justification },
+          idempotency_key: newIdempotencyKey(),
+        }),
+      });
+      setResult({
+        type: "executed",
+        summary: "Applied: " + option.justification,
+        actions: res.action_id
+          ? [
+              {
+                action_id: res.action_id,
+                tool: option.descriptor.tool,
+                operation: option.descriptor.operation,
+                status: res.status,
+              },
+            ]
+          : [],
+      });
+      refresh();
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div
+      id="pointer-prompt"
       ref={boxRef}
-      style={{ left: placement.left, top: placement.top, width: WIDTH }}
-      className="fixed z-40 rounded-lg border border-accent/40 bg-surface-2 p-3 text-sm shadow-2xl"
+      className={`w-64 rounded-xl bg-surface-charcoal/90 p-3 ${prompt ? "active" : ""}`}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") closePrompt();
+      }}
     >
-      <div className="mb-2 flex items-center gap-1.5 text-xs text-muted">
-        <Crosshair size={12} className="shrink-0 text-accent" />
-        <span className="truncate" title={locked.target.label}>
-          {locked.target.label || locked.target.kind}
-        </span>
+      <div
+        title={prompt?.target.label}
+        className="mb-2 truncate text-[10px] font-bold tracking-widest text-primary uppercase"
+      >
+        on: {prompt?.target.label ?? ""}
       </div>
 
       {!result && (
-        <input
-          autoFocus
-          value={text}
-          disabled={busy}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              run();
-            }
-          }}
-          placeholder={busy ? "Working…" : "Tell it what to do…"}
-          className="w-full rounded border border-border bg-surface px-2 py-1.5 text-sm outline-none focus:border-accent disabled:opacity-60"
-        />
+        <div className="flex items-center">
+          <input
+            ref={inputRef}
+            autoComplete="off"
+            value={text}
+            disabled={busy}
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                run();
+              }
+            }}
+            placeholder={busy ? "Working…" : "Ask Glance..."}
+            className="w-full border-none bg-transparent p-0 text-sm text-white placeholder-on-surface-variant focus:ring-0 focus:outline-none"
+          />
+        </div>
       )}
 
-      {result && <CommandResult result={result} onClarifyAnswer={onClarifyAnswer} onApplyOption={onApplyOption} />}
-
-      <button
-        onClick={dismiss}
-        className="mt-2 text-[10px] text-muted hover:text-text"
-      >
-        Esc to close
-      </button>
+      {result && (
+        <div className="text-sm">
+          <CommandResult result={result} onClarifyAnswer={clarifyAnswer} onApplyOption={applyOption} />
+        </div>
+      )}
     </div>
   );
 }

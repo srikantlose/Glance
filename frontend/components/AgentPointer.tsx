@@ -3,16 +3,20 @@
 import { useEffect, useRef } from "react";
 import { usePointer } from "@/lib/pointer";
 
-const FOLLOW = 0.18;
-const HINT_OFFSET = 14;
+const FOLLOW = 0.15;
+const SNAP = 0.1;
 
 /** a second cursor that shadows the real one. it deliberately lags and catches up --
  * moving in lockstep just reads as a decoration stuck to the system cursor. */
 export function AgentPointer() {
-  const { posRef, target, locked, busy } = usePointer();
+  const { posRef, pointerRef, lockedElRef, armed, lockedTarget, prompt } = usePointer();
   const dotRef = useRef<HTMLDivElement>(null);
-  const selfRef = useRef({ x: 0, y: 0 });
+  const chipRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
+
+  // read inside the raf loop without restarting it every state change
+  const modeRef = useRef({ armed: false, locked: false, prompting: false });
+  modeRef.current = { armed, locked: lockedTarget !== null, prompting: prompt !== null };
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -20,13 +24,21 @@ export function AgentPointer() {
 
     function tick() {
       const goal = posRef.current;
-      const self = selfRef.current;
+      const self = pointerRef.current;
+      const { armed, locked, prompting } = modeRef.current;
 
       if (!started.current && (goal.x || goal.y)) {
         // don't sweep in from 0,0 on first movement
         self.x = goal.x;
         self.y = goal.y;
         started.current = true;
+      } else if (armed && locked && !prompting && lockedElRef.current) {
+        // magnet to the middle of whatever row is locked
+        const rect = lockedElRef.current.getBoundingClientRect();
+        const tx = rect.left + rect.width / 2;
+        const ty = rect.top + rect.height / 2;
+        self.x += (tx - self.x) * SNAP;
+        self.y += (ty - self.y) * SNAP;
       } else if (reduced) {
         self.x = goal.x;
         self.y = goal.y;
@@ -36,47 +48,36 @@ export function AgentPointer() {
       }
 
       if (dotRef.current) {
-        dotRef.current.style.transform = `translate3d(${self.x}px, ${self.y}px, 0)`;
+        dotRef.current.style.left = `${self.x}px`;
+        dotRef.current.style.top = `${self.y}px`;
+      }
+      if (chipRef.current) {
+        chipRef.current.style.left = `${self.x}px`;
+        chipRef.current.style.top = `${self.y}px`;
       }
       frame = requestAnimationFrame(tick);
     }
 
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [posRef]);
+  }, [posRef, pointerRef, lockedElRef]);
 
-  const isLocked = !!target;
-  const state = busy ? "busy" : isLocked ? "locked" : "idle";
+  const locked = lockedTarget !== null;
+  const classes = ["", armed ? "active-mode" : "", locked ? "locked" : ""].filter(Boolean).join(" ");
 
   return (
-    <div
-      ref={dotRef}
-      aria-hidden
-      className="pointer-events-none fixed left-0 top-0 z-50 will-change-transform"
-    >
-      <div className="relative -translate-x-1/2 -translate-y-1/2">
-        <div
-          className={[
-            "rounded-full border-2 transition-[width,height,border-color,background-color] duration-150",
-            state === "idle" && "h-2.5 w-2.5 border-muted/70 bg-transparent",
-            state === "locked" && "h-4 w-4 border-accent bg-accent/25",
-            state === "busy" && "h-4 w-4 animate-ping border-accent bg-accent/40",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        />
-        {isLocked && !locked && !busy && (
-          <span
-            style={{ left: HINT_OFFSET }}
-            className="absolute top-1/2 -translate-y-1/2 whitespace-nowrap rounded border border-border bg-surface-2/95 px-1.5 py-0.5 text-[10px] text-muted shadow-lg"
-          >
-            <kbd className="font-sans text-accent">Ctrl</kbd>
-            <span className="mx-0.5">+</span>
-            <kbd className="font-sans text-accent">Space</kbd>
-            <span className="ml-1">to direct</span>
-          </span>
-        )}
+    <>
+      <div id="agent-pointer" ref={dotRef} aria-hidden className={classes} />
+      <div
+        id="pointer-chip"
+        ref={chipRef}
+        aria-hidden
+        className={`flex items-center rounded border border-border-glass bg-surface-charcoal px-2 py-1 shadow-lg backdrop-blur-md ${
+          locked && !prompt ? "visible" : ""
+        }`}
+      >
+        <span className="font-label-sm text-label-sm whitespace-nowrap text-on-surface">Ctrl + Space</span>
       </div>
-    </div>
+    </>
   );
 }

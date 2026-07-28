@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import Link from "next/link";
-import { Eye } from "lucide-react";
+import { AppShell } from "@/components/AppShell";
+import { ShaderBackground } from "@/components/ShaderBackground";
+import { PointerProvider } from "@/lib/pointer";
+import { AgentPointer } from "@/components/AgentPointer";
+import { PointerPrompt } from "@/components/PointerPrompt";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -17,24 +21,21 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col bg-bg text-text">
-        <header className="flex items-center gap-6 border-b border-border px-4 py-2.5">
-          <Link href="/" className="flex items-center gap-2 text-sm font-semibold">
-            <Eye size={16} className="text-accent" /> Glance
-          </Link>
-          <nav className="flex gap-4 text-sm text-muted">
-            <Link href="/" className="hover:text-text">
-              Dashboard
-            </Link>
-            <Link href="/approvals" className="hover:text-text">
-              Approvals
-            </Link>
-            <Link href="/audit" className="hover:text-text">
-              Audit
-            </Link>
-          </nav>
-        </header>
-        <main className="flex-1">{children}</main>
+      <head>
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+        />
+      </head>
+      <body className="font-body-md text-body-md flex min-h-screen flex-col text-on-surface md:flex-row">
+        <ShaderBackground />
+        <PointerProvider>
+          <div className="relative z-10 flex min-h-screen w-full flex-col md:flex-row">
+            <AppShell>{children}</AppShell>
+          </div>
+          <AgentPointer />
+          <PointerPrompt />
+        </PointerProvider>
       </body>
     </html>
   );

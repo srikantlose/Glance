@@ -1,30 +1,36 @@
-import { ListChecks } from "lucide-react";
 import type { TaskItem } from "@/lib/types";
 import { fmtIST } from "@/lib/format";
-import { Badge } from "./Badge";
 import { HoverLens } from "./HoverLens";
 import { EmptyState } from "./EmptyState";
 
 export function TasksColumn({ tasks }: { tasks: TaskItem[] }) {
   if (tasks.length === 0) {
-    return <EmptyState icon={ListChecks} label="No tasks" />;
+    return <EmptyState icon="assignment" label="No tasks" />;
   }
 
   return (
-    <div className="flex flex-col divide-y divide-border">
+    <>
       {tasks.map((t) => (
         <HoverLens key={t.id} kind="task" task={t}>
-          <div className="cursor-default px-3 py-2.5 hover:bg-surface-2">
-            <div className="flex items-center justify-between gap-2">
-              <span className={`truncate text-sm ${t.status === "completed" ? "text-muted line-through" : "text-text"}`}>
+          <div className="glance-row mb-1 flex cursor-pointer items-start justify-between rounded-lg p-3">
+            <div>
+              <h3
+                className={`mb-1 text-sm font-semibold ${
+                  t.status === "completed" ? "text-on-surface-variant line-through" : "text-on-surface"
+                }`}
+              >
                 {t.title}
-              </span>
-              {t.overdue && <Badge tone="high">overdue</Badge>}
+              </h3>
+              {t.due && <p className="text-xs text-on-surface-variant">due {fmtIST(t.due)}</p>}
             </div>
-            {t.due && <p className="text-xs text-muted">due {fmtIST(t.due)}</p>}
+            {t.overdue && (
+              <span className="rounded border border-error/30 bg-error-container/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-error">
+                overdue
+              </span>
+            )}
           </div>
         </HoverLens>
       ))}
-    </div>
+    </>
   );
 }
