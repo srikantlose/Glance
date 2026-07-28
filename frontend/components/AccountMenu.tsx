@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useAccount, useHealth } from "@/lib/api";
 import { Icon } from "./Icon";
 
@@ -76,6 +75,8 @@ export function AccountMenu({ onOpenConnection }: { onOpenConnection: () => void
             </div>
           </div>
 
+          {/* no audit link here -- the nav already owns that route, and this menu is the
+              only place the connection detail lives */}
           <div className="mt-3 flex flex-col border-t border-border-glass pt-2">
             <button
               onClick={() => {
@@ -86,13 +87,6 @@ export function AccountMenu({ onOpenConnection }: { onOpenConnection: () => void
             >
               <Icon name="cable" size={16} /> Connection details
             </button>
-            <Link
-              href="/audit"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-2 rounded px-2 py-1.5 text-sm text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
-            >
-              <Icon name="receipt_long" size={16} /> Audit log
-            </Link>
           </div>
         </div>
       )}

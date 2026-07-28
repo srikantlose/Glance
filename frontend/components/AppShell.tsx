@@ -16,8 +16,8 @@ const ROUTES = [
   { href: "/audit", label: "Audit" },
 ];
 
-// the rail's first three map to the dashboard's columns rather than to routes -- on a wide
-// screen all three are already on-screen, so these focus a column instead of navigating
+// the rail is entirely within-dashboard: it focuses a column rather than navigating. routing
+// lives in the nav and nowhere else, so no destination has two entry points
 const COLUMNS = [
   { icon: "inbox", label: "Inbox", id: "inbox" },
   { icon: "calendar_today", label: "Calendar", id: "calendar" },
@@ -78,17 +78,26 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="hidden gap-4 sm:flex">
             {ROUTES.map((r) => {
               const active = pathname === r.href;
+              // the count is what a notification bell was carrying; the second click
+              // target next to this link wasn't carrying anything
+              const badge = r.href === "/approvals" ? pending : 0;
               return (
                 <Link
                   key={r.href}
                   href={r.href}
+                  aria-label={badge ? `${r.label}, ${badge} waiting` : undefined}
                   className={
                     active
-                      ? "border-b border-primary pb-1 font-bold text-on-surface transition-colors"
-                      : "rounded px-2 py-1 font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
+                      ? "flex items-center gap-1.5 border-b border-primary pb-1 font-bold text-on-surface transition-colors"
+                      : "flex items-center gap-1.5 rounded px-2 py-1 font-medium text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
                   }
                 >
                   {r.label}
+                  {badge > 0 && (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-container px-1 text-[10px] font-bold text-on-primary-container">
+                      {badge > 9 ? "9+" : badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -100,18 +109,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <div className="flex items-center gap-4">
-          <Link
-            href="/approvals"
-            aria-label={pending ? `${pending} approvals waiting` : "Approvals"}
-            className="relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
-          >
-            <Icon name="notifications" />
-            {pending > 0 && (
-              <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-container px-1 text-[10px] font-bold text-on-primary-container">
-                {pending > 9 ? "9+" : pending}
-              </span>
-            )}
-          </Link>
           <button
             onClick={() => setSettings("preferences")}
             aria-label="Settings"
@@ -131,17 +128,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="font-label-md text-label-md">{item.label}</span>
             </button>
           ))}
-          <Link
-            href="/audit"
-            className={
-              pathname === "/audit"
-                ? "flex w-full flex-col items-center justify-center rounded-xl bg-primary-container/20 p-3 text-primary transition-all duration-300"
-                : railButton
-            }
-          >
-            <Icon name="insights" className="mb-1" />
-            <span className="font-label-md text-label-md">Insights</span>
-          </Link>
         </div>
         <div className="mb-4 flex w-full flex-col gap-4 px-2">
           <button onClick={() => setSettings("shortcuts")} aria-label="Keyboard shortcuts" className={railButton}>
