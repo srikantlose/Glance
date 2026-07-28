@@ -26,8 +26,11 @@ def list_inbox(max_results: int = 20) -> list[dict]:
     _check_failure_drill()
     svc = gmail_service()
     try:
+        # the seed cast are fictional addresses, so every delegation the demo actually
+        # sends bounces back a few minutes later -- left in, those pile up at the top of
+        # the inbox and push real seeded mail out of the window entirely
         resp = svc.users().messages().list(
-            userId=USER_ID, labelIds=["INBOX"], maxResults=max_results
+            userId=USER_ID, labelIds=["INBOX"], maxResults=max_results, q="-from:mailer-daemon"
         ).execute()
         ids = [m["id"] for m in resp.get("messages", [])]
         return [get_message(i) for i in ids]

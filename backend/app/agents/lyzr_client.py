@@ -3,7 +3,7 @@ import json
 import httpx
 
 from app.agents.parsing import parse_json_strict
-from app.config import settings, LYZR_CHAT_PATH, LYZR_USER_ID
+from app.config import settings, LYZR_CHAT_PATH, LYZR_TIMEOUT_S, LYZR_USER_ID
 
 
 def _agent_id(agent: str) -> str:
@@ -24,8 +24,12 @@ async def invoke(agent: str, payload: dict, session_id: str) -> dict:
         "message": json.dumps(payload),
     }
 
-    async with httpx.AsyncClient(base_url=settings.LYZR_BASE_URL, timeout=30) as client:
-        resp = await client.post(LYZR_CHAT_PATH, json=body, headers=headers)
+    async with httpx.AsyncClient(base_url=settings.LYZR_BASE_URL, timeout=LYZR_TIMEOUT_S) as client:
+        try:
+            resp = await client.post(LYZR_CHAT_PATH, json=body, headers=headers)
+        except httpx.TimeoutException:
+            # one slow response shouldn't 500 a demo beat outright
+            resp = await client.post(LYZR_CHAT_PATH, json=body, headers=headers)
         resp.raise_for_status()
         raw_reply = resp.json()["response"]
 

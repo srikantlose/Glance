@@ -78,6 +78,9 @@ GMAIL_SEED_LABEL = "glance-seed"
 TASKS_LIST_NAME = "Glance Demo"
 LYZR_USER_ID = "glance-demo"
 LYZR_CHAT_PATH = "/v3/inference/chat/"
+# the scheduler runs on pro with candidate slots + episodes + prefs in the payload and
+# genuinely takes a while; 30s was timing out the conflict beat about one run in three
+LYZR_TIMEOUT_S = 90
 
 # one-click Delegate on the hover card needs somewhere to delegate TO -- Arjun is the
 # designated delegation target in the seed data (see backend/scripts/seed.py)
