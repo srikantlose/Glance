@@ -1,3 +1,4 @@
+import html
 from datetime import datetime, timezone
 
 from app.config import INTERNAL_DOMAINS
@@ -17,7 +18,9 @@ def map_message(msg: dict) -> dict:
         "thread_id": msg.get("threadId"),
         "from": header(headers, "From"),
         "subject": header(headers, "Subject"),
-        "snippet": msg.get("snippet", ""),
+        # gmail hands snippets back html-escaped ("we&#39;ll"), and they go straight into
+        # both the ui and the text the agents reason over
+        "snippet": html.unescape(msg.get("snippet", "")),
         "date": header(headers, "Date"),
         "unread": "UNREAD" in msg.get("labelIds", []),
     }
