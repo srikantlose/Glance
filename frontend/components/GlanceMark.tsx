@@ -1,8 +1,8 @@
-/** the Glance mark: stacked rounded diamonds with a G that doubles as an eye.
- * drawn as vector rather than shipping the render -- at 24px in the nav a raster
- * of that logo turns to mud, and the brushed-silver ramp is the same #e2e8f0 the
- * agent pointer uses, so they read as one family. */
-export function GlanceMark({ size = 28, className = "" }: { size?: number; className?: string }) {
+/** the Glance mark: two offset rounded diamonds whose overlap reads as a G, with an
+ * eye on the right holding a cursor arrow. drawn as vector because the source render
+ * (public/screen.png) is 1024px, has its dark backdrop baked in with no alpha, and
+ * carries the wordmark -- none of which survives a 30px nav slot. */
+export function GlanceMark({ size = 30, className = "" }: { size?: number; className?: string }) {
   return (
     <svg
       width={size}
@@ -14,58 +14,56 @@ export function GlanceMark({ size = 28, className = "" }: { size?: number; class
       className={className}
     >
       <defs>
-        <linearGradient id="gm-steel" x1="14" y1="8" x2="50" y2="56" gradientUnits="userSpaceOnUse">
+        <linearGradient id="gm-steel" x1="12" y1="10" x2="52" y2="54" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#f8fafc" />
-          <stop offset="0.35" stopColor="#cbd5e1" />
-          <stop offset="0.62" stopColor="#e2e8f0" />
-          <stop offset="1" stopColor="#94a3b8" />
+          <stop offset="0.4" stopColor="#cbd5e1" />
+          <stop offset="0.7" stopColor="#e2e8f0" />
+          <stop offset="1" stopColor="#8fa0b4" />
         </linearGradient>
-        <linearGradient id="gm-steel-dim" x1="10" y1="14" x2="44" y2="52" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#94a3b8" />
-          <stop offset="1" stopColor="#475569" />
+        <linearGradient id="gm-dark" x1="14" y1="14" x2="46" y2="50" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6b7789" />
+          <stop offset="1" stopColor="#39414f" />
         </linearGradient>
       </defs>
 
-      {/* the offset plate behind, which gives the mark its layered look */}
-      <g transform="rotate(45 32 32)">
+      {/* back plate, offset up-left */}
+      <g transform="rotate(45 26 30)">
         <rect
-          x="12"
-          y="12"
-          width="40"
-          height="40"
-          rx="11"
-          stroke="url(#gm-steel-dim)"
-          strokeWidth="2.5"
-          fill="none"
-          opacity="0.55"
-        />
-        <rect
-          x="17"
+          x="13"
           y="17"
-          width="34"
-          height="34"
-          rx="9"
-          stroke="url(#gm-steel)"
+          width="26"
+          height="26"
+          rx="7"
+          stroke="url(#gm-dark)"
           strokeWidth="3"
           fill="none"
         />
       </g>
 
-      {/* the eye/G bowl -- open on the right where the G's terminal would be */}
+      {/* front plate, offset down-right -- the overlap is what reads as the G */}
+      <g transform="rotate(45 37 34)">
+        <rect
+          x="24"
+          y="21"
+          width="26"
+          height="26"
+          rx="7"
+          stroke="url(#gm-steel)"
+          strokeWidth="3.4"
+          fill="none"
+        />
+      </g>
+
+      {/* the eye, sitting over the front plate */}
       <path
-        d="M42.5 32c-3.6 5.2-7.2 7.8-10.5 7.8S25.1 37.2 21.5 32c3.6-5.2 7.2-7.8 10.5-7.8"
+        d="M25 34c4.2-6 8.7-9 13-9s8.8 3 13 9c-4.2 6-8.7 9-13 9s-8.8-3-13-9Z"
         stroke="url(#gm-steel)"
-        strokeWidth="3.2"
-        strokeLinecap="round"
+        strokeWidth="3"
+        strokeLinejoin="round"
         fill="none"
       />
-      {/* the G crossbar, doubling as the pupil's glint */}
-      <path
-        d="M32 32h8.5"
-        stroke="url(#gm-steel)"
-        strokeWidth="3.2"
-        strokeLinecap="round"
-      />
+      {/* cursor arrow for a pupil -- the pointer is the whole product idea */}
+      <path d="M34 28.5 44 33l-4.2 1.6L38 39l-4-10.5Z" fill="url(#gm-steel)" />
     </svg>
   );
 }

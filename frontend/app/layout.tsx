@@ -13,9 +13,24 @@ const inter = Inter({
   weight: ["400", "500", "600", "700"],
 });
 
+const DESCRIPTION = "A hover-first executive assistant for Gmail, Calendar and Tasks.";
+
 export const metadata: Metadata = {
   title: "Glance",
-  description: "A hover-first executive assistant for Gmail, Calendar and Tasks.",
+  description: DESCRIPTION,
+  // the full render carries the wordmark and reads properly at card size, which is
+  // exactly where the 30px nav mark can't go
+  openGraph: {
+    title: "Glance",
+    description: DESCRIPTION,
+    images: [{ url: "/screen.png", width: 1024, height: 1024, alt: "Glance" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Glance",
+    description: DESCRIPTION,
+    images: ["/screen.png"],
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
