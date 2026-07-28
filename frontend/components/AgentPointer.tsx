@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePointer } from "@/lib/pointer";
 
-const FOLLOW = 0.15;
+const FOLLOW = 0.18;
 const SNAP = 0.1;
 
 /** a second cursor that shadows the real one. it deliberately lags and catches up --

@@ -12,7 +12,7 @@ export function InboxColumn({ messages }: { messages: InboxMessage[] }) {
     <>
       {messages.map((m) => (
         <HoverLens key={m.id} kind="message" message={m}>
-          <div className="glance-row mb-1 cursor-pointer rounded-lg p-3">
+          <div className="glance-row mb-1 cursor-pointer rounded p-3">
             <div className="mb-1 flex items-start justify-between">
               <span
                 className={`truncate pr-2 font-medium ${m.unread ? "text-on-surface" : "text-on-surface-variant"}`}

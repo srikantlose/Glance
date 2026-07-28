@@ -12,7 +12,7 @@ export function TasksColumn({ tasks }: { tasks: TaskItem[] }) {
     <>
       {tasks.map((t) => (
         <HoverLens key={t.id} kind="task" task={t}>
-          <div className="glance-row mb-1 flex cursor-pointer items-start justify-between rounded-lg p-3">
+          <div className="glance-row mb-1 flex cursor-pointer items-start justify-between rounded p-3">
             <div>
               <h3
                 className={`mb-1 text-sm font-semibold ${
@@ -24,7 +24,7 @@ export function TasksColumn({ tasks }: { tasks: TaskItem[] }) {
               {t.due && <p className="text-xs text-on-surface-variant">due {fmtIST(t.due)}</p>}
             </div>
             {t.overdue && (
-              <span className="rounded border border-error/30 bg-error-container/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-error">
+              <span className="rounded-full border border-error/30 bg-error-container/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-error">
                 overdue
               </span>
             )}

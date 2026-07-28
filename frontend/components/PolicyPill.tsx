@@ -14,7 +14,7 @@ export function PolicyPill({ policyId, policyText }: { policyId: string; policyT
     <span className="relative inline-block">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-1 rounded border border-primary/30 bg-primary-container/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary uppercase hover:bg-primary-container/30"
+        className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary-container/20 px-2 py-0.5 text-[10px] font-bold tracking-wider text-primary uppercase hover:bg-primary-container/30"
       >
         <Icon name="bookmark" size={11} />
         policy

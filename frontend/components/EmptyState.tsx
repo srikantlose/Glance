@@ -11,7 +11,7 @@ export function EmptyState({ icon, label }: { icon: string; label: string }) {
 
 export function ErrorStrip({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-error/30 bg-error-container/20 px-3 py-2 text-sm text-error">
+    <div className="flex items-center justify-between gap-3 rounded border border-error/30 bg-error-container/20 px-3 py-2 text-sm text-error">
       <span>{message}</span>
       {onRetry && (
         <button

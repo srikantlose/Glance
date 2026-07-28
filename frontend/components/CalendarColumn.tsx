@@ -43,7 +43,7 @@ export function CalendarColumn({
                 conflictEventIds={group?.event_ids}
               >
                 <div
-                  className={`glance-row relative mb-1 cursor-pointer overflow-hidden rounded-lg p-3 ${
+                  className={`glance-row relative mb-1 cursor-pointer overflow-hidden rounded p-3 ${
                     conflicted
                       ? "border-tertiary/40 bg-tertiary/5"
                       : "border-border-glass bg-surface-container-lowest/50"

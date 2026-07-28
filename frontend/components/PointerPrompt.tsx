@@ -127,7 +127,7 @@ export function PointerPrompt() {
     >
       <div
         title={prompt?.target.label}
-        className="mb-2 truncate text-[10px] font-bold tracking-widest text-primary uppercase"
+        className="font-label-sm text-label-sm mb-2 truncate text-accent-violet uppercase"
       >
         on: {prompt?.target.label ?? ""}
       </div>

@@ -84,7 +84,7 @@ export function NavCommandBar() {
     <div className="relative w-full">
       <form
         onSubmit={submit}
-        className="relative flex h-10 w-full items-center rounded-lg border border-border-glass bg-surface-charcoal/80 backdrop-blur-sm transition-colors focus-within:border-primary"
+        className="relative flex h-10 w-full items-center rounded border border-border-glass bg-surface-container-lowest/80 backdrop-blur-sm transition-colors focus-within:border-accent-violet"
       >
         <input
           value={text}
@@ -92,10 +92,11 @@ export function NavCommandBar() {
           placeholder="Tell Glance what to do..."
           className="w-full border-none bg-transparent px-4 text-sm text-on-surface placeholder-on-surface-variant focus:ring-0 focus:outline-none"
         />
+        {/* send is one of the two actions the system lets wear a solid accent */}
         <button
           type="submit"
           disabled={loading}
-          className="mr-1 flex items-center gap-1 rounded-md bg-surface-container-highest px-4 py-1.5 text-sm font-medium text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-50"
+          className="mr-1 flex items-center gap-1 rounded bg-accent-violet px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-accent-violet/85 disabled:opacity-50"
         >
           <Icon name="send" size={16} /> {loading ? "Working…" : "Send"}
         </button>

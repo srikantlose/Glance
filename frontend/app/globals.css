@@ -62,16 +62,16 @@
   --color-outline-variant: #4a4455;
   --color-border-glass: rgba(255, 255, 255, 0.08);
 
-  /* radii -- deliberately squarer than tailwind's defaults, and note "full" is 12px
-     rather than a pill; that's what the design system specifies */
-  --radius: 0.125rem;
+  /* radii per DESIGN.md. the stitch export had a squashed scale with full=0.75rem,
+     which turned avatars and icon buttons into squircles -- the system says pill */
   --radius-sm: 0.125rem;
-  --radius-md: 0.125rem;
-  --radius-lg: 0.25rem;
-  --radius-xl: 0.5rem;
-  --radius-2xl: 0.5rem;
-  --radius-3xl: 0.5rem;
-  --radius-full: 0.75rem;
+  --radius: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 0.75rem;
+  --radius-3xl: 0.75rem;
+  --radius-full: 9999px;
 
   /* spacing */
   --spacing-stack-sm: 0.5rem;
@@ -167,14 +167,16 @@ body {
 
 /* ---- agent pointer ---- */
 
+/* idle is a 6px hollow gray dot; violet is reserved for the locked state and nothing
+   else in the app, per DESIGN.md's lock-on accent rule */
 #agent-pointer {
   position: fixed;
   top: 0;
   left: 0;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 1.5px solid rgba(226, 232, 240, 0.5);
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  border: 1px solid #958da1;
   pointer-events: none;
   z-index: 9999;
   transform: translate(-50%, -50%);
@@ -189,46 +191,55 @@ body {
 #agent-pointer.locked {
   width: 12px;
   height: 12px;
-  background-color: #e2e8f0;
-  border-color: #e2e8f0;
-  box-shadow: 0 0 12px rgba(226, 232, 240, 0.6);
+  background-color: #7c3aed;
+  border-color: #7c3aed;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
 }
 
 @keyframes pointerPulse {
   0% {
     box-shadow:
-      0 0 10px rgba(226, 232, 240, 0.6),
-      0 0 20px rgba(226, 232, 240, 0.3);
+      0 0 10px rgba(124, 58, 237, 0.6),
+      0 0 20px rgba(124, 58, 237, 0.3);
   }
   50% {
     box-shadow:
-      0 0 15px rgba(226, 232, 240, 0.9),
-      0 0 30px rgba(226, 232, 240, 0.5);
+      0 0 15px rgba(124, 58, 237, 0.9),
+      0 0 30px rgba(124, 58, 237, 0.5);
   }
   100% {
     box-shadow:
-      0 0 10px rgba(226, 232, 240, 0.6),
-      0 0 20px rgba(226, 232, 240, 0.3);
+      0 0 10px rgba(124, 58, 237, 0.6),
+      0 0 20px rgba(124, 58, 237, 0.3);
   }
 }
 
+/* armed: ctrl+space held, hunting for a target */
 #agent-pointer.active-mode {
   width: 28px;
   height: 28px;
-  border: 2px solid #e2e8f0;
-  background-color: rgba(226, 232, 240, 0.15);
+  border: 2px solid #7c3aed;
+  background-color: rgba(124, 58, 237, 0.15);
   animation: pointerPulse 1.5s infinite ease-in-out;
 }
 
 #agent-pointer.active-mode.locked {
   width: 12px;
   height: 12px;
-  border: 2px solid #e2e8f0;
-  background-color: #e2e8f0;
+  border: 2px solid #7c3aed;
+  background-color: #7c3aed;
   animation: none;
   box-shadow:
-    0 0 16px rgba(226, 232, 240, 0.8),
-    0 0 32px rgba(226, 232, 240, 0.4);
+    0 0 16px rgba(124, 58, 237, 0.8),
+    0 0 32px rgba(124, 58, 237, 0.4);
+}
+
+/* touch has no cursor to shadow -- DESIGN.md drops the pointer for native touch there */
+@media (hover: none), (pointer: coarse) {
+  #agent-pointer,
+  #pointer-chip {
+    display: none;
+  }
 }
 
 #pointer-chip {

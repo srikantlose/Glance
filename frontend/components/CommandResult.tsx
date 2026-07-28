@@ -91,7 +91,7 @@ export function CommandResult({ result, onClarifyAnswer, onApplyOption }: Props)
             {result.options.map((opt) => (
               <div
                 key={opt.rank}
-                className="rounded-lg border border-border-glass bg-surface-container-lowest/50 p-2"
+                className="rounded border border-border-glass bg-surface-container-lowest/50 p-2"
               >
                 <p className="font-label-md text-label-md text-on-surface-variant uppercase">
                   #{opt.rank} {opt.action}

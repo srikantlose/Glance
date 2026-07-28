@@ -30,18 +30,18 @@ export function ApprovalCard({
     .join(" + ");
 
   return (
-    <div className="glance-row rounded-lg border-border-glass bg-surface-container-lowest/50 p-4">
+    <div className="glance-row rounded border-border-glass bg-surface-container-lowest/50 p-4">
       <div className="mb-2 flex items-center justify-between text-xs text-on-surface-variant">
         <span>{fmtIST(approval.created_at)}</span>
         <span className="font-label-md text-label-md uppercase">{bundleLabel}</span>
       </div>
 
-      <pre className="mb-3 rounded-lg border border-border-glass bg-surface-container-lowest/60 p-3 text-sm whitespace-pre-wrap text-on-surface">
+      <pre className="mb-3 rounded border border-border-glass bg-surface-container-lowest/60 p-3 text-sm whitespace-pre-wrap text-on-surface">
         {approval.preview.rendered}
       </pre>
 
       {approval.pii_findings.length > 0 && (
-        <div className="mb-3 rounded-lg border border-tertiary/30 bg-tertiary/10 p-2">
+        <div className="mb-3 rounded border border-tertiary/30 bg-tertiary/10 p-2">
           <p className="mb-1 text-xs font-semibold text-tertiary">PII flagged and redacted before send</p>
           <ul className="space-y-0.5 text-xs">
             {approval.pii_findings.map((f, i) => (
