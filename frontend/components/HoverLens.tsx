@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import useSWR from "swr";
 import { useSWRConfig } from "swr";
 import { apiFetch, newIdempotencyKey } from "@/lib/api";
@@ -24,6 +25,10 @@ interface Props {
 }
 
 const PRIORITY_TONE = { high: "high", normal: "normal", low: "low" } as const;
+
+const CARD_W = 288; // w-72
+const CARD_H_EST = 200; // enough to decide whether to flip above the row
+const MARGIN = 8;
 
 function actionLabel(state: ButtonState | undefined, fallback: string): string {
   switch (state) {
@@ -50,7 +55,13 @@ export function HoverLens({
   children,
 }: Props) {
   const [show, setShow] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number } | null>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const openTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // the card is portalled but is still a react child of this wrapper, so enter/leave
+  // can arrive in either order -- track both regions and decide when the timer fires
+  const inside = useRef({ row: false, card: false });
   const [buttonState, setButtonState] = useState<Record<string, ButtonState>>({});
   const [composeOpen, setComposeOpen] = useState<Record<string, boolean>>({});
   const [composeText, setComposeText] = useState<Record<string, string>>({});
@@ -61,14 +72,61 @@ export function HoverLens({
   // stacks two popovers on the same row
   const suppressed = armed || prompt !== null;
 
-  function handleMouseEnter() {
-    timerRef.current = setTimeout(() => setShow(true), 150);
+  function place() {
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+
+    let left = r.right - CARD_W;
+    left = Math.min(Math.max(MARGIN, left), window.innerWidth - CARD_W - MARGIN);
+
+    // when it won't fit underneath, anchor the card's BOTTOM to the row's top edge and
+    // let it grow upward -- pinning `top` instead needs the height up front, and
+    // guessing it left a dead gap between row and card that killed the hover
+    if (window.innerHeight - r.bottom < CARD_H_EST + MARGIN) {
+      setPos({ left, bottom: window.innerHeight - r.top + 2 });
+    } else {
+      setPos({ left, top: r.bottom + 2 });
+    }
   }
 
-  function handleMouseLeave() {
-    if (timerRef.current) clearTimeout(timerRef.current);
-    setShow(false);
+  function scheduleClose() {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => {
+      // decided at fire time, so it doesn't matter which of enter/leave landed first
+      if (!inside.current.row && !inside.current.card) setShow(false);
+    }, 260);
   }
+
+  function enter(region: "row" | "card") {
+    inside.current[region] = true;
+    if (closeTimer.current) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    if (show || openTimer.current) return;
+    openTimer.current = setTimeout(() => {
+      openTimer.current = null;
+      place();
+      setShow(true);
+    }, 150);
+  }
+
+  function leave(region: "row" | "card") {
+    inside.current[region] = false;
+    if (openTimer.current) {
+      clearTimeout(openTimer.current);
+      openTimer.current = null;
+    }
+    scheduleClose();
+  }
+
+  useEffect(() => {
+    return () => {
+      if (openTimer.current) clearTimeout(openTimer.current);
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  }, []);
 
   const { data: verdict } = useSWR<TriageVerdict>(
     kind === "message" && show && message ? `/api/triage/${message.id}` : null,
@@ -147,19 +205,13 @@ export function HoverLens({
   const btn =
     "flex items-center gap-1 rounded border border-border-glass px-2 py-1 text-xs text-on-surface transition-colors hover:bg-surface-container-high disabled:opacity-50";
 
-  return (
+  const card = (
     <div
-      className="relative"
-      data-glance-kind={entity ? kind : undefined}
-      data-glance-id={entity?.id}
-      data-glance-label={entity?.label}
-      data-glance-event-ids={kind === "event" && conflictEventIds?.length ? conflictEventIds.join(",") : undefined}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      style={{ position: "fixed", left: pos?.left ?? 0, top: pos?.top, bottom: pos?.bottom, width: CARD_W }}
+      onMouseEnter={() => enter("card")}
+      onMouseLeave={() => leave("card")}
+      className="z-[9990] rounded-xl border border-border-glass bg-surface-charcoal/95 p-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] backdrop-blur-xl"
     >
-      {children}
-      {show && !suppressed && (
-        <div className="absolute top-full right-0 z-30 mt-1 w-72 rounded-xl border border-border-glass bg-surface-charcoal/90 p-3 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.6)] backdrop-blur-xl">
           {kind === "message" && message && (
             <>
               {!verdict ? (
@@ -286,8 +338,24 @@ export function HoverLens({
               </button>
             </>
           )}
-        </div>
-      )}
+    </div>
+  );
+
+  return (
+    <div
+      ref={wrapRef}
+      className="relative"
+      data-glance-kind={entity ? kind : undefined}
+      data-glance-id={entity?.id}
+      data-glance-label={entity?.label}
+      data-glance-event-ids={kind === "event" && conflictEventIds?.length ? conflictEventIds.join(",") : undefined}
+      onMouseEnter={() => enter("row")}
+      onMouseLeave={() => leave("row")}
+    >
+      {children}
+      {/* portalled to body so the column's overflow-y-auto can't clip it, which it did
+          for every row past the halfway mark */}
+      {show && !suppressed && pos && createPortal(card, document.body)}
     </div>
   );
 }
