@@ -2,10 +2,36 @@ import uuid
 
 import pytest
 
-from app.adapters.errors import AdapterError, GoogleAuthError401
+from app.adapters.errors import AdapterError, GoogleAuthError401, wrap_google_error
 from app.adapters.retry import with_retry
 from app.ledger import service
 from app.schemas import ActionDescriptor, Authorization
+
+
+class _FakeHttpError(Exception):
+    def __init__(self, status, reason=None):
+        super().__init__(f"http {status}")
+        self.resp = type("R", (), {"status": status})()
+        self.error_details = [{"reason": reason}] if reason else []
+
+
+@pytest.mark.parametrize(
+    "status,reason,retryable",
+    [
+        (500, None, True),
+        (429, None, True),
+        # google rate-limits with a 403, not a 429 -- a reseed burst trips this
+        (403, "rateLimitExceeded", True),
+        (403, "quotaExceeded", True),
+        (403, "userRateLimitExceeded", True),
+        # but a real permission problem must not be retried
+        (403, "insufficientPermissions", False),
+        (403, None, False),
+        (404, None, False),
+    ],
+)
+def test_google_error_retry_classification(status, reason, retryable):
+    assert wrap_google_error(_FakeHttpError(status, reason), "calendar").retryable is retryable
 
 
 def test_retry_gives_up_after_max_attempts():

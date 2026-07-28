@@ -1,6 +1,6 @@
 from googleapiclient.errors import HttpError
 
-from app.adapters.errors import AdapterError
+from app.adapters.errors import AdapterError, wrap_google_error
 from app.adapters.google_auth import tasks_service
 from app.adapters.retry import with_retry
 from app.config import TASKS_LIST_NAME
@@ -9,8 +9,7 @@ _list_id_cache: str | None = None
 
 
 def _wrap(exc: HttpError) -> AdapterError:
-    retryable = exc.resp.status >= 500 or exc.resp.status == 429
-    return AdapterError(f"tasks api error {exc.resp.status}: {exc}", retryable=retryable)
+    return wrap_google_error(exc, "tasks")
 
 
 def _list_id() -> str:

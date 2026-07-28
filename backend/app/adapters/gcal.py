@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 
 from googleapiclient.errors import HttpError
 
-from app.adapters.errors import AdapterError
+from app.adapters.errors import AdapterError, wrap_google_error
 from app.adapters.google_auth import calendar_service
 from app.adapters.retry import with_retry
 
@@ -11,8 +11,7 @@ IST = timezone(timedelta(hours=5, minutes=30))
 
 
 def _wrap(exc: HttpError) -> AdapterError:
-    retryable = exc.resp.status >= 500 or exc.resp.status == 429
-    return AdapterError(f"calendar api error {exc.resp.status}: {exc}", retryable=retryable)
+    return wrap_google_error(exc, "calendar")
 
 
 @with_retry
