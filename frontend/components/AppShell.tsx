@@ -1,10 +1,14 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useApprovals } from "@/lib/api";
 import { Icon } from "./Icon";
 import { GlanceMark } from "./GlanceMark";
 import { NavCommandBar } from "./NavCommandBar";
+import { AccountMenu } from "./AccountMenu";
+import { SettingsDialog, type SettingsSection } from "./SettingsDialog";
 
 const ROUTES = [
   { href: "/", label: "Dashboard" },
@@ -12,15 +16,57 @@ const ROUTES = [
   { href: "/audit", label: "Audit" },
 ];
 
-const RAIL = [
-  { icon: "inbox", label: "Inbox", href: "/#inbox" },
-  { icon: "calendar_today", label: "Calendar", href: "/#calendar" },
-  { icon: "assignment", label: "Tasks", href: "/#tasks" },
-  { icon: "insights", label: "Insights", href: "/audit" },
+// the rail's first three map to the dashboard's columns rather than to routes -- on a wide
+// screen all three are already on-screen, so these focus a column instead of navigating
+const COLUMNS = [
+  { icon: "inbox", label: "Inbox", id: "inbox" },
+  { icon: "calendar_today", label: "Calendar", id: "calendar" },
+  { icon: "assignment", label: "Tasks", id: "tasks" },
 ];
+
+function focusColumn(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  el.classList.add("panel-focus");
+  window.setTimeout(() => el.classList.remove("panel-focus"), 1200);
+  // hands the arrow keys to that column's scroller, which is the useful half on desktop
+  // where scrollIntoView is a no-op because all three are already visible
+  (el.querySelector("[data-panel-body]") as HTMLElement | null)?.focus({ preventScroll: true });
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { data: approvals } = useApprovals();
+  const [settings, setSettings] = useState<SettingsSection | null>(null);
+  const [pendingColumn, setPendingColumn] = useState<string | null>(null);
+
+  const pending = approvals?.length ?? 0;
+
+  // a column click from /audit has to land on the dashboard before it can focus anything
+  useEffect(() => {
+    if (pathname !== "/" || !pendingColumn) return;
+    const t = window.setTimeout(() => {
+      focusColumn(pendingColumn);
+      setPendingColumn(null);
+    }, 150);
+    return () => window.clearTimeout(t);
+  }, [pathname, pendingColumn]);
+
+  const onColumn = useCallback(
+    (id: string) => {
+      if (pathname === "/") focusColumn(id);
+      else {
+        setPendingColumn(id);
+        router.push("/");
+      }
+    },
+    [pathname, router],
+  );
+
+  const railButton =
+    "flex w-full flex-col items-center justify-center rounded-xl p-3 text-on-surface-variant transition-all duration-300 hover:bg-surface-container-high hover:text-on-surface";
 
   return (
     <>
@@ -56,43 +102,57 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-4">
           <Link
             href="/approvals"
-            className="rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
+            aria-label={pending ? `${pending} approvals waiting` : "Approvals"}
+            className="relative rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
           >
             <Icon name="notifications" />
+            {pending > 0 && (
+              <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-container px-1 text-[10px] font-bold text-on-primary-container">
+                {pending > 9 ? "9+" : pending}
+              </span>
+            )}
           </Link>
-          <button className="rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface">
+          <button
+            onClick={() => setSettings("preferences")}
+            aria-label="Settings"
+            className="rounded-full p-2 text-on-surface-variant transition-colors hover:bg-surface-container-high/50 hover:text-on-surface"
+          >
             <Icon name="settings" />
           </button>
-          <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full border border-border-glass bg-surface-container-high text-on-surface-variant">
-            <Icon name="person" size={18} />
-          </div>
+          <AccountMenu onOpenConnection={() => setSettings("connection")} />
         </div>
       </nav>
 
       <aside className="fixed top-16 left-0 z-40 hidden h-[calc(100vh-64px)] w-20 flex-col items-center justify-between border-r border-border-glass bg-surface-container-lowest/60 py-stack-lg backdrop-blur-md md:flex">
         <div className="flex w-full flex-col gap-gutter px-2">
-          {RAIL.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className="flex w-full flex-col items-center justify-center rounded-xl p-3 text-on-surface-variant transition-all duration-300 hover:bg-surface-container-high"
-            >
+          {COLUMNS.map((item) => (
+            <button key={item.id} onClick={() => onColumn(item.id)} className={railButton}>
               <Icon name={item.icon} className="mb-1" />
               <span className="font-label-md text-label-md">{item.label}</span>
-            </Link>
+            </button>
           ))}
+          <Link
+            href="/audit"
+            className={
+              pathname === "/audit"
+                ? "flex w-full flex-col items-center justify-center rounded-xl bg-primary-container/20 p-3 text-primary transition-all duration-300"
+                : railButton
+            }
+          >
+            <Icon name="insights" className="mb-1" />
+            <span className="font-label-md text-label-md">Insights</span>
+          </Link>
         </div>
         <div className="mb-4 flex w-full flex-col gap-4 px-2">
-          <button className="flex w-full flex-col items-center justify-center rounded-xl p-3 text-on-surface-variant transition-all duration-300 hover:bg-surface-container-high">
+          <button onClick={() => setSettings("shortcuts")} aria-label="Keyboard shortcuts" className={railButton}>
             <Icon name="help" />
-          </button>
-          <button className="flex w-full flex-col items-center justify-center rounded-xl p-3 text-on-surface-variant transition-all duration-300 hover:bg-surface-container-high">
-            <Icon name="logout" />
           </button>
         </div>
       </aside>
 
       <main className="mt-16 h-[calc(100vh-64px)] flex-1 overflow-y-auto p-8 md:ml-20">{children}</main>
+
+      <SettingsDialog section={settings} onSection={setSettings} onClose={() => setSettings(null)} />
     </>
   );
 }

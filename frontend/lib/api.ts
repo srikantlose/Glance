@@ -1,7 +1,7 @@
 import useSWR from "swr";
-import type { Approval, DashboardSnapshot, LedgerRowData, Policy } from "./types";
+import type { AccountInfo, Approval, DashboardSnapshot, HealthInfo, LedgerRowData, Policy } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
 export class ApiError extends Error {
   status: number;
@@ -40,6 +40,20 @@ export function useAudit(limit = 100) {
 
 export function usePolicies() {
   return useSWR<Policy[]>("/api/policies", fetcher, { refreshInterval: 15000 });
+}
+
+/** the connected google account is fixed for the life of the backend process, so once it
+ * resolves there's nothing to poll for. a failed token refresh still answers 200 with an
+ * `error` field though, and swr won't retry a 200 -- so keep polling until it connects. */
+export function useAccount() {
+  return useSWR<AccountInfo>("/api/account", fetcher, {
+    refreshInterval: (data) => (data?.connected ? 0 : 5000),
+    revalidateOnFocus: false,
+  });
+}
+
+export function useHealth() {
+  return useSWR<HealthInfo>("/healthz", fetcher, { refreshInterval: 30000 });
 }
 
 export function newIdempotencyKey(): string {

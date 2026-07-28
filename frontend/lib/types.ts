@@ -148,3 +148,22 @@ export interface Policy {
   times_applied: number;
   created_at: string;
 }
+
+export interface AccountService {
+  name: string;
+  granted: boolean;
+  scope: string | null;
+}
+
+export interface AccountInfo {
+  email: string | null;
+  connected: boolean;
+  error: string | null;
+  services: AccountService[];
+}
+
+export interface HealthInfo {
+  ok: boolean;
+  db: boolean;
+  qdrant: boolean;
+}

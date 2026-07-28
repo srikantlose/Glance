@@ -16,7 +16,10 @@ export function Panel({ title, id, action, children }: Props) {
         <h2 className="font-headline-md text-headline-md text-on-surface">{title}</h2>
         {action}
       </div>
-      <div className="flex-1 overflow-y-auto p-2">{children}</div>
+      {/* tabIndex so the rail can hand keyboard scrolling to this column */}
+      <div data-panel-body tabIndex={-1} className="flex-1 overflow-y-auto p-2 outline-none">
+        {children}
+      </div>
     </section>
   );
 }

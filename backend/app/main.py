@@ -4,7 +4,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import actions, approvals, audit, command, dashboard, demo, health, policies, triage
+from app.api import account, actions, approvals, audit, command, dashboard, demo, health, policies, triage
 from app.config import OUTBOX_POLL_SECONDS, settings
 from app.memory.collections import ensure_collections
 from app.workers.outbox_worker import run_outbox_pass
@@ -32,6 +32,7 @@ app.add_middleware(
 )
 
 app.include_router(health.router)
+app.include_router(account.router)
 app.include_router(dashboard.router)
 app.include_router(triage.router)
 app.include_router(command.router)

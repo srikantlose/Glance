@@ -152,6 +152,16 @@ body {
   border-color: rgba(226, 232, 240, 0.1);
 }
 
+/* the rail's column buttons flash this on -- on a wide screen the column is already in
+   view, so the ring is the only feedback that the click did anything */
+.panel-focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
