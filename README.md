@@ -1,6 +1,6 @@
 # Glance
 
-A hover-first executive assistant for Gmail, Calendar and Tasks. Hover a message, event or task and it tells you what it would do and why — cites the policy it's acting on, or asks one question if it doesn't know your preference yet.
+A hover-first executive assistant for Gmail, Calendar and Tasks. Hover a message, event or task and it tells you what it would do and why — cites the policy it's acting on, or asks one question if it doesn't know your preference yet. A second cursor trails your own; press Ctrl+Space and tell it what to do with whatever you're pointing at.
 
 Live: https://glance-lake.vercel.app
 Demo video: TBD
@@ -8,6 +8,12 @@ Demo video: TBD
 ## What this is
 
 Three inbox-style columns (mail, calendar, tasks) with a command bar on top. Everything the assistant does — archiving, scheduling, drafting, delegating — goes through a policy gate first: if it matches something you've told it before, it acts and shows you the policy it used. If not, it asks once, and remembers the answer.
+
+## The pointer
+
+There's a second cursor on screen that follows yours and locks onto whatever row you're over. Press **Ctrl+Space** and a prompt opens right there, already aimed at that message, event or task — type anything and it runs against that one thing.
+
+What you're pointing at gets folded into the instruction before the policy gate sees it, so "archive this" on a newsletter cites your auto-archive policy and just does it, while the same two words on your PM's weekly status stops and asks — the words are identical, the row is what differs. Direct orders ("archive this", "mark this done", "cancel this") skip the agent round-trip and execute straight away; anything open-ended goes through the full manager decomposition, and asks for clarification at the cursor when it needs to. The four hover buttons still work as before.
 
 ## Architecture
 
