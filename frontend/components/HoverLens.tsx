@@ -17,6 +17,7 @@ interface Props {
   event?: CalendarEvent;
   task?: TaskItem;
   hasConflict?: boolean;
+  conflictEventIds?: string[];
   onResolveConflict?: () => void;
   children: React.ReactNode;
 }
@@ -38,7 +39,16 @@ function actionLabel(state: ButtonState | undefined, fallback: string): string {
   }
 }
 
-export function HoverLens({ kind, message, event, task, hasConflict, onResolveConflict, children }: Props) {
+export function HoverLens({
+  kind,
+  message,
+  event,
+  task,
+  hasConflict,
+  conflictEventIds,
+  onResolveConflict,
+  children,
+}: Props) {
   const [show, setShow] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [buttonState, setButtonState] = useState<Record<string, ButtonState>>({});
@@ -100,8 +110,26 @@ export function HoverLens({ kind, message, event, task, hasConflict, onResolveCo
     }
   }
 
+  // the agent pointer reads these off the dom to work out what it's aimed at, which
+  // keeps the three column components from having to know it exists
+  const entity = message
+    ? { id: message.id, label: `${message.from} — ${message.subject}` }
+    : event
+      ? { id: event.id, label: event.title }
+      : task
+        ? { id: task.id, label: task.title }
+        : null;
+
   return (
-    <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+    <div
+      className="relative"
+      data-glance-kind={entity ? kind : undefined}
+      data-glance-id={entity?.id}
+      data-glance-label={entity?.label}
+      data-glance-event-ids={kind === "event" && conflictEventIds?.length ? conflictEventIds.join(",") : undefined}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       {children}
       {show && (
         <div className="absolute right-0 top-full z-30 mt-1 w-72 rounded-lg border border-border bg-surface-2 p-3 shadow-xl">

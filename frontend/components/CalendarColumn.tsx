@@ -41,6 +41,7 @@ export function CalendarColumn({
                   kind="event"
                   event={ev}
                   hasConflict={conflicted}
+                  conflictEventIds={group?.event_ids}
                   onResolveConflict={() => group && onResolveConflict(group.event_ids)}
                 >
                   <div

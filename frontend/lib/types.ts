@@ -87,6 +87,16 @@ export interface SchedulerOption {
   descriptor: ActionDescriptor | null;
 }
 
+export type EntityKind = "message" | "event" | "task";
+
+export interface EntityTarget {
+  kind: EntityKind;
+  id: string;
+  label: string;
+  /** the whole conflict group, when the pointer is on a clashing event */
+  eventIds?: string[];
+}
+
 export type CommandResponse =
   | { type: "executed"; summary: string; actions: { action_id: string; tool: string; operation: string; status: string }[] }
   | { type: "clarification"; clarification_id: string; question: string }
